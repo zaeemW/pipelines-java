@@ -3,20 +3,39 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
-trigger:
-- main
+# trigger:
+# - main
 
-pool:
-  vmImage: ubuntu-latest
+# pool:
+#   vmImage: ubuntu-latest
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+#  environment: 
+#        name: 'testEnvironment'
+#        resourceName: LAPTOP-RPN4S8GP
+#        resourceType: virtualMachine
+# steps:
+# - task: Maven@3
+#   inputs:
+#     mavenPomFile: 'pom.xml'
+#     mavenOptions: '-Xmx3072m'
+#     javaHomeOption: 'JDKVersion'
+#     jdkVersionOption: '1.11'
+#     jdkArchitectureOption: 'x64'
+#     publishJUnitResults: true
+#     testResultsFiles: '**/surefire-reports/TEST-*.xml'
+#     goals: 'package'
+
+trigger: none
+
+jobs:
+- deployment: VMDeploy
+  displayName: Deploy to VM
+  environment: 
+   name: 'testEnvironment'
+   resourceName: LAPTOP-RPN4S8GP
+   resourceType: virtualMachine
+  strategy:
+     runOnce:
+        deploy:   
+          steps:
+            - script: echo "Hello world"
