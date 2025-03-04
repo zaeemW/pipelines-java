@@ -25,17 +25,33 @@
 #     testResultsFiles: '**/surefire-reports/TEST-*.xml'
 #     goals: 'package'
 
-trigger: none
+# Hello Word
+# trigger: none
 
-jobs:
-- deployment: VMDeploy
-  displayName: Deploy to VM
-  environment: 
-   name: 'testEnvironment'
-   resourceName: LAPTOP-RPN4S8GP
-   resourceType: virtualMachine
-  strategy:
-     runOnce:
-        deploy:   
-          steps:
-            - script: echo "Hello world"
+# jobs:
+# - deployment: VMDeploy
+#   displayName: Deploy to VM
+#   environment: 
+#    name: 'testEnvironment'
+#    resourceName: LAPTOP-RPN4S8GP
+#    resourceType: virtualMachine
+#   strategy:
+#      runOnce:
+#         deploy:   
+#           steps:
+#             - script: echo "Hello world"
+
+
+trigger:
+- main
+
+variables:
+  myVariable: "Hello, DevOps!"
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - script: echo $(myVariable)
+      displayName: "Display Variable"
