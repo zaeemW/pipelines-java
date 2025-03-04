@@ -1,57 +1,58 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
-# trigger:
-# - main
-
-# pool:
-#   vmImage: ubuntu-latest
-
-#  environment: 
-#        name: 'testEnvironment'
-#        resourceName: LAPTOP-RPN4S8GP
-#        resourceType: virtualMachine
-# steps:
-# - task: Maven@3
-#   inputs:
-#     mavenPomFile: 'pom.xml'
-#     mavenOptions: '-Xmx3072m'
-#     javaHomeOption: 'JDKVersion'
-#     jdkVersionOption: '1.11'
-#     jdkArchitectureOption: 'x64'
-#     publishJUnitResults: true
-#     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-#     goals: 'package'
-
-# Hello Word
-# trigger: none
-
-# jobs:
-# - deployment: VMDeploy
-#   displayName: Deploy to VM
-#   environment: 
-#    name: 'testEnvironment'
-#    resourceName: LAPTOP-RPN4S8GP
-#    resourceType: virtualMachine
-#   strategy:
-#      runOnce:
-#         deploy:   
-#           steps:
-#             - script: echo "Hello world"
-
-
 trigger:
 - main
 
-variables:
-  myVariable: "Hello, DevOps!"
+# variables:
+#   myVariable: "Hello, DevOps!"
 
 stages:
-- stage: Build
+- stage: BuildStage
+  displayName: "Build Stage"
   jobs:
-  - job: BuildJob
+  - job: BuildJob1
+    displayName: "Build Job 1"
     steps:
-    - script: echo $(myVariable)
-      displayName: "Display Variable"
+    - script: echo "Building App - Job 1"
+
+  - job: BuildJob2
+    displayName: "Build Job 2"
+    steps:
+    - script: echo "Building App - Job 2"
+
+  - job: BuildJob3
+    displayName: "Build Job 3"
+    steps:
+    - script: echo "Building App - Job 3"
+
+# These three jobs (BuildJob1, BuildJob2, BuildJob3) run in parallel inside BuildStage
+
+- stage: TestStage
+  displayName: "Test Stage"
+  dependsOn: BuildStage  # Runs after BuildStage is completed
+  jobs:
+  - job: UnitTest
+    displayName: "Run Unit Tests"
+    steps:
+    - script: echo "Running Unit Tests"
+
+  - job: IntegrationTest
+    displayName: "Run Integration Tests"
+    dependsOn: UnitTest  # Runs sequentially after UnitTest
+    steps:
+    - script: echo "Running Integration Tests"
+
+# UnitTest runs first, then IntegrationTest runs after UnitTest is completed
+
+- stage: DeployStage
+  displayName: "Deployment Stage"
+  dependsOn: TestStage  # Runs after TestStage is completed
+  jobs:
+  - job: DeployToStaging
+    displayName: "Deploy to Staging"
+    steps:
+    - script: echo "Deploying to Staging"
+
+  - job: DeployToProduction
+    displayName: "Deploy to Production"
+    dependsOn: DeployToStaging  # Runs after DeployToStaging is completed
+    steps:
+    - script: echo "Deploying to Production"
