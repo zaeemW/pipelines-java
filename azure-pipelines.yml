@@ -1,57 +1,45 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
-# trigger:
-# - main
-
-# pool:
-#   vmImage: ubuntu-latest
-
-#  environment: 
-#        name: 'testEnvironment'
-#        resourceName: LAPTOP-RPN4S8GP
-#        resourceType: virtualMachine
-# steps:
-# - task: Maven@3
-#   inputs:
-#     mavenPomFile: 'pom.xml'
-#     mavenOptions: '-Xmx3072m'
-#     javaHomeOption: 'JDKVersion'
-#     jdkVersionOption: '1.11'
-#     jdkArchitectureOption: 'x64'
-#     publishJUnitResults: true
-#     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-#     goals: 'package'
-
-# Hello Word
-# trigger: none
-
-# jobs:
-# - deployment: VMDeploy
-#   displayName: Deploy to VM
-#   environment: 
-#    name: 'testEnvironment'
-#    resourceName: LAPTOP-RPN4S8GP
-#    resourceType: virtualMachine
-#   strategy:
-#      runOnce:
-#         deploy:   
-#           steps:
-#             - script: echo "Hello world"
-
-
-trigger:
-- main
-
-variables:
-  myVariable: "Hello, DevOps!"
+trigger: none  # This pipeline is manually triggered
 
 stages:
-- stage: Build
+- stage: StartPolling
   jobs:
-  - job: BuildJob
+  - job: TriggerChildPipelines
     steps:
-    - script: echo $(myVariable)
-      displayName: "Display Variable"
+    - script: echo "Triggering Child Pipelines"
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '<YourServiceConnection>'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Trigger Child Pipelines
+          az pipelines run --name "ChildPipeline1" --org "https://dev.azure.com/YourOrg" --project "YourProject"
+          az pipelines run --name "ChildPipeline2" --org "https://dev.azure.com/YourOrg" --project "YourProject"
+
+- stage: MonitorChildPipelines
+  dependsOn: StartPolling
+  jobs:
+  - job: PollChildStatus
+    steps:
+    - script: echo "Polling child pipelines status..."
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '<YourServiceConnection>'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Function to check child pipeline statuses
+          check_status() {
+            status1=$(az pipelines runs list --name "ChildPipeline1" --org "https://dev.azure.com/YourOrg" --project "YourProject" --query "[0].state" -o tsv)
+            status2=$(az pipelines runs list --name "ChildPipeline2" --org "https://dev.azure.com/YourOrg" --project "YourProject" --query "[0].state" -o tsv)
+            
+            if [[ "$status1" == "completed" && "$status2" == "completed" ]]; then
+              echo "All child pipelines completed."
+              exit 0
+            else
+              echo "Waiting for child pipelines..."
+              sleep 30
+              check_status
+            fi
+          }
+          check_status
