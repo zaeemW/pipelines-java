@@ -1,10 +1,32 @@
-trigger: none  # Only runs when triggered by Parent Pipeline
+trigger: none
 
-stages:
-- stage: Test
-  jobs:
-  - job: RunTests
-    steps:
-    - script: echo "Running tests..."
-    - script: sleep 90  # Simulating work
-    - script: echo "Tests completed."
+pool:
+  vmimage: Ubuntu-latest # Replace with your agent pool
+
+steps:
+- task: Bash@3
+  env:
+    AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "Triggering another pipeline..."
+          PIPELINE_ID=$(az pipelines run --name "child-pipeline2" --org "https://dev.azure.com/zawarraiOrg" --project "Polling" --branch "main" --query "id" -o tsv)
+          
+          echo "Triggered pipeline ID: $PIPELINE_ID"
+          
+          # Wait for completion
+          while true; do
+              STATUS=$(az pipelines runs show --id $PIPELINE_ID --org "https://dev.azure.com/zawarraiOrg" --project "Polling" --query "result" -o tsv)
+              echo "Current status: $STATUS"
+              
+              if [[ "$STATUS" == "succeeded" ]]; then
+                  echo "Pipeline succeeded."
+                  exit 0
+              elif [[ "$STATUS" == "failed" || "$STATUS" == "canceled" ]]; then
+                  echo "Pipeline failed or canceled."
+                  exit 1
+              fi
+              
+              sleep 10  # Check every 10 seconds
+          done
