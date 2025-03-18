@@ -1,10 +1,10 @@
 trigger: none  # Only runs when triggered by Parent Pipeline
 
 stages:
-- stage: Build
+- stage: Test
   jobs:
-  - job: BuildApp
+  - job: RunTests
     steps:
-    - script: echo "Building the application..."
-    - script: sleep 60  # Simulating work
-    - script: echo "Build completed."
+    - script: echo "Running tests..."
+    - script: sleep 90  # Simulating work
+    - script: echo "Tests completed."
